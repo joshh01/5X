@@ -541,7 +541,7 @@
   <div class="header-left">
     <span class="wordmark">XXXXX</span>
     <span class="phase-pill" id="phase-label">Onboarding</span>
-    <span class="version-tag">v17</span>
+    <span class="version-tag">v18</span>
   </div>
   <div class="header-right">
     <button class="icon-btn dev-only" id="export-btn" onclick="exportChat()">
@@ -1221,7 +1221,7 @@ async function requestLadder() {
 
 function resetConversation() {
   // Clear persistence
-  try { localStorage.removeItem('5x_profile'); localStorage.removeItem('5x_ladder'); localStorage.removeItem('5x_history'); localStorage.removeItem('5x_streak'); localStorage.removeItem('5x_streak_date'); } catch(e) {}
+  try { localStorage.removeItem('5x_profile'); localStorage.removeItem('5x_ladder'); localStorage.removeItem('5x_history'); localStorage.removeItem('5x_streak'); localStorage.removeItem('5x_streak_date'); localStorage.removeItem('5x_checkins'); } catch(e) {}
 
   // Onboarding state
   history = []; started = false; exchangeCount = 0; lastUserMessage = null; lastDeepExchange = -10; deepCount = 0;
@@ -1386,6 +1386,18 @@ function buildCheckinPrompt() {
 
   const today = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
 
+  // Pull last 3 check-in records from localStorage
+  let recentCheckins = '';
+  try {
+    const records = JSON.parse(localStorage.getItem('5x_checkins') || '[]').slice(0, 3);
+    if (records.length) {
+      recentCheckins = '\nRECENT CHECK-INS (most recent first):\n' +
+        records.map(r =>
+          `${r.date}:\n  Win: ${r.win}\n  Challenge: ${r.challenge}\n  Committed to: ${r.next}`
+        ).join('\n') + '\n';
+    }
+  } catch(e) {}
+
   return `You are an accountability coach running a daily check-in. Today is ${today}.
 
 You already know this person from their onboarding. Do not re-introduce yourself. Do not explain what you're doing. Just check in.
@@ -1407,9 +1419,9 @@ ${ladderSteps.join('\n')}
 
 ACTIVE LADDER STEP: Step ${activeStepNum} — ${activeStepText}
 The user is currently on Step ${activeStepNum} of ${ladderSteps.length}. When acknowledging a win that maps to this step, connect it back in one sentence: "That's Step ${activeStepNum} on your ladder — [one sentence connecting the action to their identity target]."` : ''}
-
+${recentCheckins}
 CHECK-IN RULES:
-- Open with ONE direct question referencing their specific last commitment. Not "how are you doing." Reference what they said they'd do.
+- Open with ONE direct question referencing their most recent commitment. If RECENT CHECK-INS exist above, use the most recent NEXT commitment — that's what they said they'd do since the last session. If no prior check-ins, use their onboarding FIRST_ACTION. Not "how are you doing." Be specific.
 - Keep it to 5–8 exchanges total. This is a check-in, not a full session.
 - Affirm wins in one direct sentence. No padding. No "that's a commitment held" — just name what they did and move on.
 - When they report a failure: don't shame. Ask once what got in the way — specifically the environment, not their character. Then move forward.
@@ -1647,6 +1659,84 @@ function ciStripDeepTag(text) {
   return { text, isDeep };
 }
 
+// ── SAVE CHECK-IN RECORD ──
+function saveCheckinRecord(raw) {
+  try {
+    const get = (key) => raw.match(new RegExp(key + ':\\s*(.+)', 'i'))?.[1]?.trim() || '';
+    const record = {
+      date: new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }),
+      dateStr: new Date().toDateString(),
+      win: get('WIN'),
+      challenge: get('CHALLENGE'),
+      next: get('NEXT')
+    };
+    const existing = JSON.parse(localStorage.getItem('5x_checkins') || '[]');
+    // Replace if same day, otherwise prepend — keep max 7
+    const filtered = existing.filter(r => r.dateStr !== record.dateStr);
+    filtered.unshift(record);
+    localStorage.setItem('5x_checkins', JSON.stringify(filtered.slice(0, 7)));
+  } catch(e) {}
+}
+
+// ── NEW CHECK-IN BUTTON ──
+function showNewCheckinBtn() {
+  const inputArea = document.getElementById('ci-input-area');
+  // Replace input row with a centred button
+  inputArea.innerHTML = `
+    <div style="display:flex;justify-content:center;padding:12px 0 4px;">
+      <button onclick="startNewCheckin()" style="
+        background:none; border:1px solid var(--accent-dim); border-radius:var(--radius);
+        color:var(--accent); font-family:'DM Mono',monospace; font-size:11px;
+        letter-spacing:1px; padding:12px 24px; cursor:pointer;
+        transition:background 0.2s;
+      " onmouseover="this.style.background='var(--accent-bg)'" onmouseout="this.style.background='none'">
+        Start new check-in
+      </button>
+    </div>
+    <div class="hint">Your progress is saved</div>
+  `;
+}
+
+function startNewCheckin() {
+  // Reset check-in state fully — keep profile/ladder intact
+  ciStarted = false;
+  ciHistory = [];
+  ciLoading = false;
+  ciExchangeCount = 0;
+  ciLastUserMessage = null;
+  ciDeepCount = 0;
+  ciLastDeepExchange = -10;
+
+  // Clear messages and header streak so they rebuild fresh
+  document.getElementById('ci-messages').innerHTML = '';
+  document.getElementById('ci-streak').innerHTML = '';
+
+  // Restore input area HTML
+  document.getElementById('ci-input-area').innerHTML = `
+    <div class="input-row">
+      <textarea id="ci-input" placeholder="Type your response..." rows="1" onkeydown="handleCiKey(event)" oninput="autoResize(this)"></textarea>
+      <button class="send-btn" id="ci-send-btn" onclick="ciSend()" aria-label="Send">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#080808" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="19" x2="12" y2="5"/>
+          <polyline points="5 12 12 5 19 12"/>
+        </svg>
+      </button>
+    </div>
+    <div class="hint">Enter to send · Shift+Enter for new line</div>
+  `;
+
+  // Re-attach focus listener for mobile scroll
+  document.getElementById('ci-input').addEventListener('focus', () => {
+    setTimeout(() => {
+      const m = document.getElementById('ci-messages');
+      m.scrollTop = m.scrollHeight;
+    }, 350);
+  });
+
+  // Re-init
+  initCheckin();
+}
+
 // ── CI PROCESS REPLY ──
 function ciProcessReply(raw) {
   const closeMatch = raw.match(/---CHECKIN_CLOSE---([\s\S]*?)---CHECKIN_CLOSE_END---/);
@@ -1657,14 +1747,19 @@ function ciProcessReply(raw) {
     const { text, isDeep } = ciStripDeepTag(clean);
     if (text) ciAppendMessage('coach', text, isDeep);
 
-    const card = buildCheckinCloseCard(closeMatch[1].trim());
+    const closeRaw = closeMatch[1].trim();
+    const card = buildCheckinCloseCard(closeRaw);
     document.getElementById('ci-messages').appendChild(card);
     document.getElementById('ci-messages').scrollTop = document.getElementById('ci-messages').scrollHeight;
 
-    // Lock input — session done
+    // Save close card to localStorage
+    saveCheckinRecord(closeRaw);
+
+    // Lock input — show new check-in button instead
     ciSetLoading(true);
     document.getElementById('ci-input').placeholder = 'Check-in complete';
     document.getElementById('phase-label').textContent = 'Done for today';
+    showNewCheckinBtn();
   } else {
     const { text, isDeep } = ciStripDeepTag(clean);
     ciAppendMessage('coach', text, isDeep);
