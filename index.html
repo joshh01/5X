@@ -285,11 +285,6 @@
   .intro-start:hover { opacity:0.88; }
   .intro-start:active { transform:scale(0.98); }
 
-  .intro-note {
-    margin-top:14px; font-size:11px;
-    color:var(--dimmer); font-family:'DM Mono',monospace;
-    text-align:center; letter-spacing:0.5px;
-  }
 
   /* Deep question bubble — warm amber */
   .bubble.deep-bubble {
@@ -337,13 +332,6 @@
   .tab-panel.active { display: flex; }
 
   /* ── CHECK-IN SPECIFIC ── */
-  .ci-date-pill {
-    font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px;
-    color: var(--dimmer); background: var(--card); border: 1px solid var(--border-mid);
-    border-radius: 20px; padding: 3px 8px; text-transform: uppercase;
-    white-space: nowrap; align-self: center;
-  }
-
   .ci-locked {
     flex: 1; display: flex; flex-direction: column;
     align-items: center; justify-content: center;
@@ -356,6 +344,59 @@
   }
 
   .ci-locked-sub { font-size: 13px; color: var(--dimmer); opacity: 0.6; line-height: 1.6; }
+
+  /* ── CHECK-IN HEADER BAR ── */
+  .ci-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+    background: var(--black); flex-shrink: 0; gap: 12px;
+  }
+
+  .ci-date {
+    font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1.5px;
+    color: var(--dimmer); text-transform: uppercase; white-space: nowrap;
+  }
+
+  .ci-step-pill {
+    font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px;
+    color: var(--accent); background: var(--accent-bg); border: 1px solid var(--accent-border);
+    border-radius: 20px; padding: 3px 10px; white-space: nowrap;
+  }
+
+  .ci-streak {
+    display: flex; align-items: center; gap: 5px;
+    font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px;
+    color: var(--dimmer); white-space: nowrap;
+  }
+
+  .ci-streak-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent); box-shadow: 0 0 4px rgba(200,241,53,0.5);
+  }
+
+  .ci-streak-dot.empty {
+    background: var(--border-mid); box-shadow: none;
+  }
+
+  /* ── PROFILE STRIP ── */
+  .ci-profile-strip {
+    padding: 12px 16px; border-bottom: 1px solid var(--border);
+    background: var(--black); flex-shrink: 0;
+  }
+
+  .ci-identity {
+    font-size: 13px; color: var(--white); font-style: italic;
+    line-height: 1.5; opacity: 0.8; margin-bottom: 5px;
+  }
+
+  .ci-root {
+    font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px;
+    color: var(--dimmer); text-transform: uppercase; line-height: 1.4;
+  }
+
+  .ci-root span {
+    color: var(--accent-dim); margin-right: 6px;
+  }
 
   /* Checkin close card */
   .ci-close-card {
@@ -399,7 +440,7 @@
     </div>
   </div>
   <button class="intro-start" onclick="startFromIntro()">Start my session</button>
-  <div class="intro-note">Requires API key · Enter after this screen</div>
+
 </div>
 
 <div class="top-line"></div>
@@ -426,6 +467,16 @@
       </select>
       <button class="icon-btn simulate" id="simulate-btn" onclick="runSimulation()">Simulate</button>
     </div>
+    <div class="sim-wrap">
+      <select class="sim-select" id="bypass-select">
+        <option value="0">Jamie, 24 — drifting</option>
+        <option value="1">Rachel, 38 — career stuck</option>
+        <option value="2">Marcus, 31 — stalled founder</option>
+        <option value="3">Priya, 45 — empty &amp; purposeless</option>
+        <option value="4">Tom, 19 — no direction</option>
+      </select>
+      <button class="icon-btn simulate" id="bypass-btn" onclick="runBypass()">Bypass</button>
+    </div>
     <button class="icon-btn" onclick="resetConversation()">Reset</button>
   </div>
 </header>
@@ -441,7 +492,7 @@
 <div class="messages" id="messages">
   <div class="empty" id="empty-state">
     <div class="empty-mark">XXXXX</div>
-    <div class="empty-sub">Enter your API key to begin</div>
+
   </div>
 </div>
 
@@ -466,6 +517,15 @@
   <div class="ci-locked" id="ci-locked">
     <div class="ci-locked-mark">XXXXX</div>
     <div class="ci-locked-sub">Complete onboarding first.<br>Your coach needs your profile before check-ins start.</div>
+  </div>
+
+  <div id="ci-header" style="display:none;">
+    <div class="ci-header">
+      <div class="ci-date" id="ci-date"></div>
+      <div class="ci-step-pill" id="ci-step-pill"></div>
+      <div class="ci-streak" id="ci-streak"></div>
+    </div>
+    <div class="ci-profile-strip" id="ci-profile-strip"></div>
   </div>
 
   <div class="messages" id="ci-messages" style="display:none;"></div>
@@ -631,16 +691,6 @@ function activateDeepMode(bubble) {
 
 
 
-function checkKey() {
-  // API key now handled server-side via proxy — auto-start
-  if (!started) {
-    document.getElementById('input').disabled = false;
-    document.getElementById('send-btn').disabled = false;
-    const hint = document.getElementById('hint');
-    if (hint) hint.textContent = 'Enter to send · Shift+Enter for new line';
-    document.getElementById('empty-state')?.remove();
-  }
-}
 
 async function startConversation() {
   started = true;
@@ -1073,14 +1123,41 @@ async function requestLadder() {
 }
 
 function resetConversation() {
+  // Onboarding state
   history = []; started = false; exchangeCount = 0; lastUserMessage = null; lastDeepExchange = -10; deepCount = 0;
   isSimulating = false;
 
-  document.getElementById('messages').innerHTML = `<div class="empty" id="empty-state"><div class="empty-mark">XXXXX</div><div class="empty-sub">Enter your API key to begin</div></div>`;
+  // Check-in state
+  ciStarted = false; ciHistory = []; ciLoading = false; ciExchangeCount = 0;
+  ciLastUserMessage = null; ciDeepCount = 0; ciLastDeepExchange = -10;
+
+  // Onboarding UI
+  document.getElementById('messages').innerHTML = `<div class="empty" id="empty-state"><div class="empty-mark">XXXXX</div><div class="empty-sub">Session reset — start a new conversation</div></div>`;
   document.getElementById('phase-label').textContent = 'Onboarding';
   document.getElementById('input').value = '';
   document.getElementById('input').style.height = 'auto';
-  checkKey();
+
+  // Check-in UI
+  document.getElementById('ci-locked').style.display = '';
+  document.getElementById('ci-header').style.display = 'none';
+  document.getElementById('ci-messages').style.display = 'none';
+  document.getElementById('ci-messages').innerHTML = '';
+  document.getElementById('ci-profile-strip').innerHTML = '';
+  document.getElementById('ci-streak').innerHTML = '';
+  document.getElementById('ci-input-area').style.display = 'none';
+  document.getElementById('ci-input').value = '';
+  document.getElementById('ci-input').style.height = 'auto';
+  document.getElementById('ci-input').placeholder = 'Type your response...';
+  document.getElementById('ci-input').disabled = false;
+  document.getElementById('ci-send-btn').disabled = false;
+
+  // Lock check-in tab
+  const ciTab = document.getElementById('tab-ci');
+  ciTab.disabled = true;
+  ciTab.classList.remove('unlocked');
+
+  // Switch back to onboarding tab if currently on check-in
+  switchTab('ob');
 }
 
 document.getElementById('input').addEventListener('focus', () => { setTimeout(scrollBottom, 350); });
@@ -1212,11 +1289,61 @@ function initCheckin() {
   if (ciStarted) return;
 
   const card = document.getElementById('profile-card');
-  if (!card) return; // still locked — shouldn't happen since tab is disabled until profile exists
+  if (!card) return;
 
   ciStarted = true;
 
-  // Swap locked state for live UI
+  // ── HEADER BAR ──
+  // Date
+  const dateEl = document.getElementById('ci-date');
+  dateEl.textContent = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).toUpperCase();
+
+  // Active ladder step
+  const stepEl = document.getElementById('ci-step-pill');
+  const ladderCard = document.getElementById('ladder-card');
+  if (ladderCard) {
+    const steps = ladderCard.querySelectorAll('.ladder-step');
+    const activeIdx = Array.from(steps).findIndex(s => s.querySelector('.step-num.active'));
+    const activeNum = activeIdx >= 0 ? activeIdx + 1 : 1;
+    stepEl.textContent = `STEP ${activeNum} OF ${steps.length}`;
+  } else {
+    stepEl.style.display = 'none';
+  }
+
+  // Streak (hardcoded to 1 until localStorage lands)
+  const streakEl = document.getElementById('ci-streak');
+  const dot = document.createElement('div'); dot.className = 'ci-streak-dot';
+  const label = document.createElement('span'); label.textContent = '1 DAY';
+  streakEl.appendChild(dot); streakEl.appendChild(label);
+
+  // ── PROFILE STRIP ──
+  const strip = document.getElementById('ci-profile-strip');
+
+  // Pull identity target
+  const identityEl = card.querySelector('.identity-statement');
+  const identity = identityEl ? identityEl.textContent.replace(/[""]/g, '').trim() : null;
+
+  // Pull root cause
+  let rootCause = null;
+  card.querySelectorAll('.profile-row').forEach(row => {
+    const key = row.querySelector('.profile-key')?.textContent?.trim().toLowerCase();
+    if (key === 'root cause') rootCause = row.querySelector('.profile-val')?.textContent?.trim();
+  });
+
+  if (identity) {
+    const id = document.createElement('div'); id.className = 'ci-identity';
+    id.textContent = '\u201C' + identity + '\u201D';
+    strip.appendChild(id);
+  }
+
+  if (rootCause) {
+    const rc = document.createElement('div'); rc.className = 'ci-root';
+    rc.innerHTML = `<span>BLOCKER</span>${rootCause}`;
+    strip.appendChild(rc);
+  }
+
+  // Show header, messages, input
+  document.getElementById('ci-header').style.display = '';
   document.getElementById('ci-locked').style.display = 'none';
   document.getElementById('ci-messages').style.display = '';
   document.getElementById('ci-input-area').style.display = '';
@@ -1417,6 +1544,161 @@ document.getElementById('ci-input').addEventListener('focus', () => {
     m.scrollTop = m.scrollHeight;
   }, 350);
 });
+
+// ── BYPASS PROFILES ──
+const BYPASS_PROFILES = [
+  {
+    label: "Jamie, 24 — drifting",
+    profile: `PRIMARY_GOAL: Build a career doing something that actually means something — stop drifting between jobs
+SUPPORTING_GOALS: Get consistent with exercise | Stop smoking weed every night | Have something to show for his time
+IDENTITY_TARGET: someone who makes things happen instead of watching other people do it
+PROBLEM_AREAS: scrolls for 3-4 hours every night | smokes weed to switch off | bedroom is a mess, hasn't unpacked properly in 8 months | takes any shift offered because saying no feels wrong
+ROOT_CAUSE: No environment that demands anything from him — everything is optional so nothing happens
+FAILURE_PATTERN: Gets motivated late at night, makes a plan, goes to bed, wakes up and the feeling is gone — repeats for months
+IDENTITY_GAP: Sees himself as someone who hasn't started yet vs who he wants to be — someone with something real underway
+PEAK_MOMENT: Six months ago when he had a temp contract with structure — woke up with a reason, felt purposeful, went to the gym twice that week
+KEYSTONE: Morning structure — if the first hour has shape, the day doesn't collapse
+FIRST_ACTION: Set an alarm for 7:30am tomorrow, make coffee before touching the phone
+TONE: direct`,
+    ladder: `STEP_1: Set one alarm for 7:30am and keep the phone on the other side of the room tonight | WHY: You've said the mornings are where the day is decided — this forces a different start | WHEN: Day 1
+STEP_2: Write down three things you could actually build or do — not research, actual outputs | WHY: The weed and scrolling fill a vacuum; this gives the vacuum a name | WHEN: Days 2-3
+STEP_3: Pick one of the three and spend 45 minutes on it before your first shift this week | WHY: This is the version of you you described — someone with something underway | WHEN: Days 4-7
+STEP_4: Clear your bedroom — bin bags, surfaces wiped, floor clear | WHY: The environment reflects the drift and reinforces it every morning you wake up in it | WHEN: Week 2
+STEP_5: Replace one weed night with something physical — doesn't have to be a gym, a 30 minute walk counts | WHY: You said the contract period you went to the gym twice — the physical and the purposeful travel together | WHEN: Week 3
+STEP_6: Tell one person what you're building — not to ask for help, just to say it out loud | WHY: The plan lives only in your head right now; saying it out loud changes its status | WHEN: Week 4
+STEP_7: Apply for or pitch one real thing related to what you picked in step 3 | WHY: This is what separates the person watching from the person doing | WHEN: Week 5-6`
+  },
+  {
+    label: "Rachel, 38 — career stuck",
+    profile: `PRIMARY_GOAL: Leave her job in financial compliance and do something that doesn't make her dread Mondays
+SUPPORTING_GOALS: Get her relationship back on track — it's been on autopilot for two years | Lose the weight she's put on since the pandemic | Have energy again
+IDENTITY_TARGET: someone who built something she chose — not something she fell into at 26 and never left
+PROBLEM_AREAS: works until 8pm most nights even though no one makes her | drinks wine to decompress, every night | hasn't had a real conversation with her partner in weeks | gym membership untouched for 11 months
+ROOT_CAUSE: Identity is completely fused with being good at her job — leaving feels like admitting the last 12 years were a mistake
+FAILURE_PATTERN: Researches alternatives obsessively on weekends, gets overwhelmed by options, closes the tabs, pours a glass of wine, tells herself she'll think about it next weekend
+IDENTITY_GAP: Competent, reliable professional everyone depends on vs the person she described at 26 who wanted to make things
+PEAK_MOMENT: A secondment three years ago where she led a small team on a new product — stayed late because she wanted to, not because she had to
+KEYSTONE: The wine — it's the pressure valve that makes the status quo survivable and the change feel unnecessary
+FIRST_ACTION: No wine on Tuesday. Replace it with 20 minutes writing what the next thing could actually be — not researching, writing.
+TONE: steady`,
+    ladder: `STEP_1: One wine-free evening this week — Tuesday — and use that 20 minutes to write, not search | WHY: The research loops keep the decision abstract; writing forces you to say what you actually think | WHEN: Day 1
+STEP_2: Write one paragraph describing what the secondment felt like — why it was different, what you were doing | WHY: You know the answer is in there; this makes it legible | WHEN: Days 2-3
+STEP_3: List every skill from the last 12 years that you'd take with you — not your job title, the actual things | WHY: You're not starting from zero; you're redirecting something substantial | WHEN: Days 4-7
+STEP_4: Have one real conversation with your partner — not about the job, about what you both actually want the next five years to look like | WHY: The relationship is on autopilot partly because you're both waiting for something to change first | WHEN: Week 2
+STEP_5: Reach out to one person who's made a similar move — not for advice, just to hear how it felt | WHY: The change lives in your head as a cliff; hearing someone else describe the landing changes the picture | WHEN: Week 3
+STEP_6: Book one session with a career coach or take one concrete step toward the thing you wrote about | WHY: Research without output is the pattern — this breaks it | WHEN: Week 4
+STEP_7: Give yourself a decision deadline — a specific date by which you'll have made a move or made a plan to | WHY: The person you described doesn't wait for permission; she sets a date | WHEN: Week 5-6`
+  },
+  {
+    label: "Marcus, 31 — stalled founder",
+    profile: `PRIMARY_GOAL: Get his SaaS product to $5k MRR — it's been sitting at $800 for four months
+SUPPORTING_GOALS: Stop living like a student — eat properly, sleep properly, stop the 2am doom scrolling | Build something he can tell people about without hedging
+IDENTITY_TARGET: someone who ships and charges for it — not someone who's always almost there
+PROBLEM_AREAS: spends 4-5 hours a day on Twitter/X convincing himself it's marketing | eats one real meal a day, usually late | apartment hasn't been cleaned in three weeks | avoids opening his analytics dashboard
+ROOT_CAUSE: Terrified of finding out the product isn't good enough — so he stays in motion without moving forward
+FAILURE_PATTERN: Writes cold outreach, doesn't send it. Builds features nobody asked for instead. Tells himself he needs more to show before he can sell.
+IDENTITY_GAP: Founder who talks about building vs the person who actually closes customers
+PEAK_MOMENT: First month after launch — woke up at 6am, had a list, worked through it, got his first three paying users in a week
+KEYSTONE: The avoidance of sales — every other problem is downstream of not having enough revenue
+FIRST_ACTION: Send five cold emails tomorrow before 10am. Not write them — send them.
+TONE: direct`,
+    ladder: `STEP_1: Send five cold emails before 10am tomorrow — written, sent, done | WHY: Everything else you're doing is preparation for something you keep not doing | WHEN: Day 1
+STEP_2: Open the analytics dashboard and look at where users drop off — write down what you see | WHY: You've been avoiding the data because it might tell you something hard; it will also tell you what to fix | WHEN: Days 2-3
+STEP_3: Talk to one churned user or one person who saw the product and didn't buy — find out why | WHY: You've been building features in the dark; this turns the light on | WHEN: Days 4-7
+STEP_4: Set a hard stop at 7pm every day for one week — no product work after that | WHY: The 2am sessions feel like hustle but they're producing avoidance work, not revenue work | WHEN: Week 2
+STEP_5: Do one sales action every day for a week — email, DM, call, demo. One per day, logged. | WHY: This is the version of you that closed the first three users; you know how to do it | WHEN: Week 3
+STEP_6: Clean the apartment and batch-cook food for three days | WHY: The environment is reinforcing the drift — this isn't optional self-care, it's changing the signal your surroundings are sending | WHEN: Week 4
+STEP_7: Set a 30-day revenue target and tell someone what it is | WHY: The founder you want to be ships and charges for it — this is what that looks like | WHEN: Week 5-6`
+  },
+  {
+    label: "Priya, 45 — empty & purposeless",
+    profile: `PRIMARY_GOAL: Find something that's hers — not her family's, not her employer's, something she chose
+SUPPORTING_GOALS: Reconnect with her husband as a person not just a co-parent | Get her health back — she's ignored it for years | Have one thing she looks forward to
+IDENTITY_TARGET: a woman who has her own thing — not defined entirely by what she does for other people
+PROBLEM_AREAS: house is immaculate but she uses cleaning as a way to avoid sitting still | hasn't read a book for herself in two years | says yes to every school volunteer request, resents it | hasn't seen her own friends without children present in over a year
+ROOT_CAUSE: Her identity was built entirely around being needed — now that the kids need her less, she doesn't know who she is
+FAILURE_PATTERN: Starts something for herself, feels guilty for taking the time, abandons it and cleans the kitchen instead
+IDENTITY_GAP: The woman who manages everything for everyone vs the person she was at 32 who had opinions and ambitions of her own
+PEAK_MOMENT: A pottery class she took alone for three months when her youngest was two — said it was the only hour of the week that was completely hers
+KEYSTONE: The guilt — it's what makes every attempt at something personal feel selfish and therefore temporary
+FIRST_ACTION: Book one pottery class, or something equivalent, for next week. Not research it — book it.
+TONE: steady`,
+    ladder: `STEP_1: Book one thing for yourself this week — a class, a walk alone, anything that's yours | WHY: You described the pottery class as the only hour that was completely yours; you've been without that for years | WHEN: Day 1
+STEP_2: Say no to one volunteer request this week without explaining yourself | WHY: The guilt you described is a habit as much as a feeling — this is a small rehearsal for not letting it decide | WHEN: Days 2-3
+STEP_3: Call or message one friend and make specific plans — a date, a time, just the two of you | WHY: You said you haven't seen your own friends without children in over a year; that's a version of yourself disappearing | WHEN: Days 4-7
+STEP_4: Tell your husband one thing you want — not for the house, not for the kids, for you | WHY: You described the relationship as functional; this is how it becomes something else | WHEN: Week 2
+STEP_5: Book a GP appointment and get a basic health check done | WHY: You said you've ignored your health for years — this isn't about getting fit, it's about taking yourself seriously | WHEN: Week 3
+STEP_6: Spend 30 minutes writing about what you actually liked doing before you organised your life entirely around other people | WHY: The goal isn't pottery specifically — it's finding what the pottery was giving you | WHEN: Week 4
+STEP_7: Commit to one recurring thing that's yours — weekly, non-negotiable, in the diary | WHY: The woman you described has her own thing; this is what that looks like in practice | WHEN: Week 5-6`
+  },
+  {
+    label: "Tom, 19 — no direction",
+    profile: `PRIMARY_GOAL: Figure out if university is actually for him or just what he was supposed to do
+SUPPORTING_GOALS: Make some money — he's completely broke and it's affecting everything | Get off his phone — he knows it's a problem | Find one person who gets what he's actually interested in
+IDENTITY_TARGET: someone who made a real choice about his life instead of just going along with what was expected
+PROBLEM_AREAS: on his phone from the moment he wakes up, sometimes 7-8 hours a day | skips lectures regularly, tells himself he'll catch up | sleeps until noon when he has no commitments | genuinely doesn't know what he's interested in outside of gaming
+ROOT_CAUSE: Has never been asked what he actually wants — just what grades he got. Has no practice making his own decisions.
+FAILURE_PATTERN: Gets a burst of motivation, watches productivity videos for two hours, feels like he's done something, goes back to his phone
+IDENTITY_GAP: The kid following someone else's plan vs someone who has even one thing that's actually his
+PEAK_MOMENT: Built a PC from scratch at 16 with money he saved up himself — researched every part, made every decision, said it was the most satisfied he'd ever felt
+KEYSTONE: The mornings — he loses the whole day before noon and then the guilt makes the afternoon unproductive too
+FIRST_ACTION: Set an alarm for 9am tomorrow. Get up when it goes off. That's the whole task.
+TONE: direct`,
+    ladder: `STEP_1: Set an alarm for 9am tomorrow and get up when it goes off — phone stays across the room | WHY: You said you lose the whole day before noon; this is where it starts | WHEN: Day 1
+STEP_2: Spend 30 minutes writing down everything you've ever chosen to learn — not school subjects, things you went looking for yourself | WHY: You said you don't know what you're interested in, but the PC build says otherwise — there's more there | WHEN: Days 2-3
+STEP_3: Find one way to make some money this week — doesn't matter what, just something you can do now | WHY: Being broke is affecting your thinking; having even £50 you earned changes the way you hold yourself | WHEN: Days 4-7
+STEP_4: Go to every lecture for one full week — not to catch up, just to see what it feels like when you're not behind | WHY: You can't make a real decision about university when you're only experiencing the guilty version of it | WHEN: Week 2
+STEP_5: Cap your phone at 2 hours a day for one week using screen time limits | WHY: The 7-8 hours isn't relaxing you — you said you know it's a problem; this is testing whether you can choose differently | WHEN: Week 3
+STEP_6: Look up two or three jobs or courses related to what came out of your list in step 2 — not to apply, just to see if anything feels like it fits | WHY: The choice about university becomes clearer when there's an actual alternative to compare it to | WHEN: Week 4
+STEP_7: Make one decision about next year and tell someone — stay, leave, gap year, whatever — but decide it yourself | WHY: The person you want to be made a real choice about his life; this is that choice | WHEN: Week 5-6`
+  }
+];
+
+function runBypass() {
+  const idx = parseInt(document.getElementById('bypass-select').value);
+  const p = BYPASS_PROFILES[idx];
+
+  // Reset everything cleanly first
+  history = []; started = true; exchangeCount = 0; lastUserMessage = null;
+  lastDeepExchange = -10; deepCount = 0; isSimulating = false;
+  ciStarted = false; ciHistory = []; ciLoading = false; ciExchangeCount = 0;
+  ciLastUserMessage = null; ciDeepCount = 0; ciLastDeepExchange = -10;
+
+  // Clear onboarding UI
+  document.getElementById('messages').innerHTML = '';
+  document.getElementById('empty-state')?.remove();
+  document.getElementById('input').disabled = false;
+  document.getElementById('send-btn').disabled = false;
+  document.getElementById('input').value = '';
+  document.getElementById('phase-label').textContent = 'Bypassed';
+
+  // Reset check-in UI
+  document.getElementById('ci-locked').style.display = '';
+  document.getElementById('ci-header').style.display = 'none';
+  document.getElementById('ci-messages').style.display = 'none';
+  document.getElementById('ci-messages').innerHTML = '';
+  document.getElementById('ci-profile-strip').innerHTML = '';
+  document.getElementById('ci-streak').innerHTML = '';
+  document.getElementById('ci-input-area').style.display = 'none';
+
+  // Dismiss intro screen if showing
+  document.getElementById('intro-screen').style.display = 'none';
+
+  // Switch to onboarding tab to show the cards rendering
+  switchTab('ob');
+
+  // Inject a synthetic note so it reads naturally
+  appendMessage('coach', `Bypassing onboarding — loading profile for ${p.label.split('—')[0].trim()}.`, null, false);
+
+  // Build the synthetic block and process it exactly as a real API response would
+  const synthetic = `---PROFILE---\n${p.profile}\n---END---\n\n---LADDER---\n${p.ladder}\n---LADDER_END---`;
+  processReply(synthetic, null, false);
+
+  // Push a stub into history so check-in prompt has something to reference
+  history.push({ role: 'assistant', content: synthetic });
+
+  showToast('Profile loaded — go to Check-in tab');
+}
 
 // ── SIMULATE ──
 const SIM_PERSONA = `You are a human being having a real conversation. You are being coached. Your only job is to answer questions. You cannot ask questions. You cannot comment on the conversation. You cannot say things like that response was meant for me or ignore that or that was a glitch. Just answer the last thing said to you in 1-2 sentences as a real person would. Rules: answer only the last question asked. Never question the coach. Never ask what the answer is. Never say things like "that's your call" or "you tell me." If you don't know what to say, respond with "not sure" or "I guess so" or give a vague one-line answer. Stay in character always. Sound like a real person texting — short, slightly guarded, not dramatic. 1-2 sentences maximum. You are not aware this is a simulation. Never reference the conversation itself. If you get confused about who is supposed to speak, just give a short vague answer like "not sure" or stay silent with a "..." You never ask questions. You only answer. If your response sounds like a question or a coach prompt, rewrite it as a short answer instead. Do not repeat the same phrase, expression, or verbal tic more than twice in a conversation. Vary your language naturally.`;
