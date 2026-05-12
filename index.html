@@ -54,11 +54,9 @@
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px;
   }
   .header-right { display:flex; align-items:center; gap:6px; flex-shrink:0; }
-  .dev-only { display:none; }
-  @media(min-width:700px){ .dev-only { display:flex; } }
-  /* icon-btn dev-only needs display:flex not block */
-  button.dev-only { display:none; }
-  @media(min-width:700px){ button.dev-only { display:flex; } }
+  /* Dev tools hidden on mobile — visible desktop only */
+  .dev-only { display:none !important; }
+  @media(min-width:700px){ .dev-only { display:flex !important; } }
 
   .icon-btn {
     background:none; border:1px solid var(--border-mid); border-radius:var(--radius-sm);
@@ -288,48 +286,58 @@
     position:fixed; inset:0;
     background:var(--black);
     display:flex; flex-direction:column;
-    align-items:center; justify-content:center;
-    padding:32px 24px;
+    align-items:center; justify-content:flex-start;
+    padding:0;
     z-index:100;
     animation:fadeUp 0.4s ease both;
+    overflow-y:auto; overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  .intro-inner {
+    display:flex; flex-direction:column; align-items:center;
+    padding:40px 20px 32px;
+    width:100%; max-width:480px; min-height:100%;
+    justify-content:center;
+    box-sizing:border-box;
   }
 
   .intro-logo {
     font-family:'DM Mono',monospace;
-    font-size:28px; font-weight:500;
+    font-size:24px; font-weight:500;
     letter-spacing:8px; color:var(--accent);
-    margin-bottom:40px;
+    margin-bottom:32px; text-align:center;
   }
 
   .intro-card {
     background:var(--card);
     border:1px solid var(--border-mid);
     border-radius:var(--radius);
-    padding:24px;
-    max-width:420px; width:100%;
-    margin-bottom:28px;
+    padding:20px;
+    width:100%;
+    margin-bottom:20px;
   }
 
   .intro-row {
-    display:flex; gap:14px; align-items:flex-start;
-    margin-bottom:20px;
+    display:flex; gap:12px; align-items:flex-start;
+    margin-bottom:18px;
   }
   .intro-row:last-child { margin-bottom:0; }
 
   .intro-icon {
-    width:32px; height:32px; border-radius:50%;
+    width:30px; height:30px; border-radius:50%;
     background:var(--accent-bg); border:1px solid var(--accent-border);
     display:flex; align-items:center; justify-content:center;
     flex-shrink:0; margin-top:1px;
-    font-family:'DM Mono',monospace; font-size:11px; color:var(--accent);
+    font-family:'DM Mono',monospace; font-size:10px; color:var(--accent);
   }
 
   .intro-text { flex:1; }
-  .intro-text strong { display:block; font-size:14px; color:var(--white); margin-bottom:3px; font-weight:500; }
-  .intro-text span { font-size:13px; color:var(--dim); line-height:1.5; }
+  .intro-text strong { display:block; font-size:13.5px; color:var(--white); margin-bottom:2px; font-weight:500; }
+  .intro-text span { font-size:12.5px; color:var(--dim); line-height:1.5; }
 
   .intro-start {
-    width:100%; max-width:420px;
+    width:100%;
     background:var(--accent); border:none; border-radius:var(--radius);
     color:#080808; font-family:'DM Sans',sans-serif;
     font-size:15px; font-weight:500;
@@ -497,32 +505,33 @@
 
 <!-- INTRO SCREEN -->
 <div class="intro-screen" id="intro-screen">
-  <div class="intro-logo">XXXXX</div>
-  <div class="intro-card">
-    <div class="intro-row">
-      <div class="intro-icon">10</div>
-      <div class="intro-text">
-        <strong>Takes 10–15 minutes</strong>
-        <span>This is a real conversation, not a quiz. Answer honestly and it gets more useful.</span>
+  <div class="intro-inner">
+    <div class="intro-logo">XXXXX</div>
+    <div class="intro-card">
+      <div class="intro-row">
+        <div class="intro-icon">10</div>
+        <div class="intro-text">
+          <strong>Takes 10–15 minutes</strong>
+          <span>This is a real conversation, not a quiz. Answer honestly and it gets more useful.</span>
+        </div>
+      </div>
+      <div class="intro-row">
+        <div class="intro-icon">→</div>
+        <div class="intro-text">
+          <strong>You'll get a coaching profile</strong>
+          <span>A breakdown of what's actually blocking you — not the surface answer — and a personalised action plan.</span>
+        </div>
+      </div>
+      <div class="intro-row">
+        <div class="intro-icon">✦</div>
+        <div class="intro-text">
+          <strong>The more honest, the better</strong>
+          <span>It won't judge you. The only way to get a useful result is to say the real thing.</span>
+        </div>
       </div>
     </div>
-    <div class="intro-row">
-      <div class="intro-icon">→</div>
-      <div class="intro-text">
-        <strong>You'll get a coaching profile</strong>
-        <span>A breakdown of what's actually blocking you — not the surface answer — and a personalised action plan.</span>
-      </div>
-    </div>
-    <div class="intro-row">
-      <div class="intro-icon">✦</div>
-      <div class="intro-text">
-        <strong>The more honest, the better</strong>
-        <span>It won't judge you. The only way to get a useful result is to say the real thing.</span>
-      </div>
-    </div>
+    <button class="intro-start" onclick="startFromIntro()">Start my session</button>
   </div>
-  <button class="intro-start" onclick="startFromIntro()">Start my session</button>
-
 </div>
 
 <div class="top-line"></div>
@@ -556,6 +565,7 @@
         <option value="2">Marcus, 31 — stalled founder</option>
         <option value="3">Priya, 45 — empty &amp; purposeless</option>
         <option value="4">Tom, 19 — no direction</option>
+      <option value="5">Josh (real)</option>
       </select>
       <button class="icon-btn simulate" id="bypass-btn" onclick="runBypass()">Bypass</button>
     </div>
@@ -1844,6 +1854,27 @@ STEP_4: Go to every lecture for one full week — not to catch up, just to see w
 STEP_5: Cap your phone at 2 hours a day for one week using screen time limits | WHY: The 7-8 hours isn't relaxing you — you said you know it's a problem; this is testing whether you can choose differently | WHEN: Week 3
 STEP_6: Look up two or three jobs or courses related to what came out of your list in step 2 — not to apply, just to see if anything feels like it fits | WHY: The choice about university becomes clearer when there's an actual alternative to compare it to | WHEN: Week 4
 STEP_7: Make one decision about next year and tell someone — stay, leave, gap year, whatever — but decide it yourself | WHY: The person you want to be made a real choice about his life; this is that choice | WHEN: Week 5-6`
+  },
+  {
+    label: "Josh (real)",
+    profile: `PRIMARY_GOAL: Make $5k/mo outside of employment income through the AI coaching tool
+SUPPORTING_GOALS: Build a defined aesthetic physique | Learn to fight and be self sufficient | Become a leader — someone people look up to | Fix the environment (home, car, social circle)
+IDENTITY_TARGET: the man who wakes up early, runs a structured day, and doesn't avoid — the version that existed in China and can exist at home
+PROBLEM_AREAS: wakes 11am-2pm, starts work at 11pm | hours on Instagram, Facebook, YouTube short-form | home neglected, grass uncut, car has unfixed problems | social circle isn't full of winners | porn — years, since high school
+ROOT_CAUSE: Home environment is full of unresolved problems that drain decision-making energy before he even opens the laptop — making avoidance always the easier path
+FAILURE_PATTERN: Sits down to work, hits the discomfort of not knowing the exact next step, opens YouTube instead — friction of ambiguity triggers escape, not effort
+IDENTITY_GAP: Knows exactly who he wants to be and has lived that version in China — but doesn't actively feel the cost of not being him at home, which removes urgency
+PEAK_MOMENT: Business trip to China — early wakeups, productive work hours, team time after, no worries, nothing to stress about, just work
+KEYSTONE: Wake time — losing the early wakeup in China was the first domino that took down structure, drive, and work hours in sequence
+FIRST_ACTION: Alarm set for 9am, sit down to work on the code at 7pm
+TONE: direct`,
+    ladder: `STEP_1: Set alarm for 9am tonight — at 7pm tomorrow sit down and finalize one specific piece of code functionality, not the whole thing | WHY: The China version of you started with the wakeup — this is that moment, at home | WHEN: Day 1
+STEP_2: Wake at 9am both days — before opening any app, write down the single next thing the business needs | WHY: Naming the next step kills the ambiguity that sends you to YouTube | WHEN: Days 2-3
+STEP_3: Code functionality finalized or as far as it can go — pick one physical product concept and write what it is, what it does, who it's for | WHY: The man who people look up to ships things — this is the first thing you ship | WHEN: Days 4-7
+STEP_4: Tackle one unresolved environment problem — car, grass, or a room in the house, one thing done | WHY: Every unresolved problem is a daily tax on decision-making energy — removing one changes the feel of home | WHEN: Week 2
+STEP_5: App appearance work begins — UI sessions this week, alternate with physical product outline | WHY: The business becomes real when it looks real — this is when the China version starts existing at home | WHEN: Week 3
+STEP_6: Build a basic marketing plan — who you're targeting, where they are, how you reach them — then make one real move toward reaching them | WHY: $5k/mo doesn't come from a finished product sitting on a hard drive | WHEN: Week 4
+STEP_7: First version of the full product — app plus physical component — ready to show someone outside your circle, get one real human being to go through it | WHY: The man people look up to built something real and put it in front of the world — this is that moment | WHEN: Week 5-6`
   }
 ];
 
