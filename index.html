@@ -32,6 +32,9 @@
     background:var(--black); color:var(--white);
     font-family:'DM Sans',sans-serif; font-size:15px; line-height:1.65;
     overflow:hidden; display:flex; flex-direction:column;
+    /* Subtle dot grid — grounds the void */
+    background-image: radial-gradient(circle, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 28px 28px;
   }
 
   .top-line { height:2px; background:var(--accent); flex-shrink:0; }
@@ -51,6 +54,11 @@
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:110px;
   }
   .header-right { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+  .dev-only { display:none; }
+  @media(min-width:700px){ .dev-only { display:flex; } }
+  /* icon-btn dev-only needs display:flex not block */
+  button.dev-only { display:none; }
+  @media(min-width:700px){ button.dev-only { display:flex; } }
 
   .icon-btn {
     background:none; border:1px solid var(--border-mid); border-radius:var(--radius-sm);
@@ -77,10 +85,11 @@
 
   .messages {
     flex:1; overflow-y:auto; overflow-x:hidden;
-    padding:24px 16px 12px;
-    display:flex; flex-direction:column; gap:18px;
+    padding:28px 20px 16px;
+    display:flex; flex-direction:column; gap:26px;
     -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
   }
+  @media(min-width:700px){ .messages { padding:36px 10% 20px; } }
   .messages::-webkit-scrollbar { width:3px; }
   .messages::-webkit-scrollbar-track { background:transparent; }
   .messages::-webkit-scrollbar-thumb { background:var(--border-mid); border-radius:2px; }
@@ -98,23 +107,46 @@
   .msg.user  { flex-direction:row-reverse; align-items:flex-start; }
 
   .avatar {
-    width:28px; height:28px; border-radius:50%; flex-shrink:0;
+    width:34px; height:34px; border-radius:50%; flex-shrink:0;
     display:flex; align-items:center; justify-content:center;
-    font-family:'DM Mono',monospace; font-size:8px; font-weight:500; letter-spacing:0.5px; margin-top:4px;
+    font-family:'DM Mono',monospace; font-size:8px; font-weight:500; letter-spacing:0.5px; margin-top:2px;
   }
-  .coach-av { background:var(--accent-bg); border:1px solid var(--accent-border); color:var(--accent); }
-  .user-av  { background:var(--card); border:1px solid var(--border-mid); color:var(--dim); }
+  .coach-av {
+    background: radial-gradient(circle at 35% 35%, rgba(200,241,53,0.18), rgba(200,241,53,0.04));
+    border:1px solid var(--accent-border);
+    box-shadow: 0 0 12px rgba(200,241,53,0.08);
+  }
+  .user-av  { background:var(--card); border:1px solid var(--border-mid); color:var(--dimmer); font-size:7px; letter-spacing:1px; }
 
   .bubble {
-    padding:12px 15px; border-radius:var(--radius);
-    max-width:calc(100% - 42px); font-size:15px; line-height:1.65;
+    padding:14px 18px; border-radius:var(--radius);
+    max-width:calc(100% - 50px); font-size:15px; line-height:1.7;
   }
-  @media(min-width:600px){ .bubble{font-size:15.5px;padding:14px 18px;} .messages{padding:28px 24px 14px;} }
-  .msg.coach .bubble { background:var(--card); border:1px solid var(--border); color:var(--white); border-radius:4px var(--radius) var(--radius) var(--radius); }
-  .msg.user  .bubble { background:var(--user-bg); border:1px solid var(--border-mid); color:#cccccc; border-radius:var(--radius) 4px var(--radius) var(--radius); text-align:right; }
+  @media(min-width:600px){ .bubble{font-size:15.5px; padding:16px 20px; max-width:78%;} }
+  .msg.coach .bubble {
+    background:var(--card);
+    border:1px solid var(--border);
+    border-left: 2px solid rgba(200,241,53,0.3);
+    color:var(--white);
+    border-radius:2px var(--radius) var(--radius) var(--radius);
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .msg.user  .bubble {
+    background: linear-gradient(135deg, #1c1c1c 0%, #181818 100%);
+    border:1px solid var(--border-mid);
+    color:#bbbbbb;
+    border-radius:var(--radius) 2px var(--radius) var(--radius);
+    text-align:right;
+  }
 
-  .typing-bubble { background:var(--card); border:1px solid var(--border); border-radius:4px var(--radius) var(--radius) var(--radius); padding:14px 16px; display:flex; gap:5px; align-items:center; }
-  .dot { width:5px; height:5px; background:var(--dimmer); border-radius:50%; animation:blink 1.2s ease-in-out infinite; }
+  .typing-bubble {
+    background:var(--card); border:1px solid var(--border);
+    border-left: 2px solid rgba(200,241,53,0.3);
+    border-radius:2px var(--radius) var(--radius) var(--radius);
+    padding:16px 18px; display:flex; gap:6px; align-items:center;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+  }
+  .dot { width:6px; height:6px; background:var(--accent-dim); border-radius:50%; animation:blink 1.2s ease-in-out infinite; }
   .dot:nth-child(2){animation-delay:0.2s} .dot:nth-child(3){animation-delay:0.4s}
   @keyframes blink { 0%,80%,100%{opacity:0.3;transform:scale(0.85)} 40%{opacity:1;transform:scale(1.05)} }
 
@@ -172,17 +204,39 @@
   .step-timeframe { font-family:'DM Mono',monospace; font-size:10px; color:var(--dimmer); margin-top:4px; letter-spacing:0.5px; }
 
   /* ── INPUT ── */
-  .input-area { padding:12px 16px; padding-bottom:max(16px,env(safe-area-inset-bottom)); border-top:1px solid var(--border); background:var(--black); flex-shrink:0; }
+  .input-area {
+    padding:14px 20px; padding-bottom:max(18px,env(safe-area-inset-bottom));
+    border-top:1px solid var(--border);
+    background: linear-gradient(to top, rgba(8,8,8,0.98) 0%, rgba(14,14,14,0.95) 100%);
+    flex-shrink:0;
+    backdrop-filter: blur(8px);
+  }
+  @media(min-width:700px){ .input-area { padding-left:10%; padding-right:10%; } }
   .input-row { display:flex; gap:10px; align-items:flex-end; }
   textarea {
-    flex:1; background:var(--card); border:1px solid var(--border-mid); border-radius:var(--radius);
+    flex:1; background:var(--card); border:1px solid var(--border-mid);
+    border-radius:20px;
     color:var(--white); font-family:'DM Sans',sans-serif; font-size:16px; line-height:1.5;
-    padding:12px 14px; resize:none; outline:none; min-height:48px; max-height:120px;
-    overflow-y:auto; -webkit-appearance:none; -webkit-overflow-scrolling:touch; transition:border-color 0.2s;
+    padding:13px 18px; resize:none; outline:none; min-height:50px; max-height:120px;
+    overflow-y:auto; -webkit-appearance:none; -webkit-overflow-scrolling:touch;
+    transition:border-color 0.25s, box-shadow 0.25s;
+  }
+  textarea:focus {
+    border-color: rgba(200,241,53,0.35);
+    box-shadow: 0 0 0 3px rgba(200,241,53,0.06), 0 2px 16px rgba(0,0,0,0.4);
   }
   textarea::placeholder { color:var(--dimmer); }
-  .send-btn { width:48px; height:48px; min-width:48px; border-radius:var(--radius); background:var(--accent); border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:opacity 0.15s,transform 0.1s; }
-  .send-btn:hover{opacity:0.88} .send-btn:active{transform:scale(0.93)} .send-btn:disabled{opacity:0.25;cursor:not-allowed;transform:none}
+  .send-btn {
+    width:50px; height:50px; min-width:50px;
+    border-radius:50%;
+    background:var(--accent); border:none; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    transition:opacity 0.15s, transform 0.15s, box-shadow 0.15s;
+    box-shadow: 0 0 0 0 rgba(200,241,53,0);
+  }
+  .send-btn:hover { opacity:0.92; box-shadow: 0 0 20px rgba(200,241,53,0.25); transform:scale(1.04); }
+  .send-btn:active { transform:scale(0.93); }
+  .send-btn:disabled { opacity:0.2; cursor:not-allowed; transform:none; box-shadow:none; }
   .send-btn svg { width:18px; height:18px; pointer-events:none; }
   .hint { margin-top:8px; font-size:11px; color:var(--dimmer); font-family:'DM Mono',monospace; text-align:center; }
   @media(max-width:360px){.hint{display:none}}
@@ -345,10 +399,10 @@
 
   .ci-locked-sub { font-size: 13px; color: var(--dimmer); opacity: 0.6; line-height: 1.6; }
 
-  /* ── CHECK-IN HEADER BAR ── */
+  /* ── CHECK-IN INFO BAR (single row) ── */
   .ci-header {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 16px; border-bottom: 1px solid var(--border);
+    padding: 8px 16px; border-bottom: 1px solid var(--border);
     background: var(--black); flex-shrink: 0; gap: 12px;
   }
 
@@ -374,39 +428,67 @@
     background: var(--accent); box-shadow: 0 0 4px rgba(200,241,53,0.5);
   }
 
-  .ci-streak-dot.empty {
-    background: var(--border-mid); box-shadow: none;
+  .ci-streak-dot.empty { background: var(--border-mid); box-shadow: none; }
+
+  /* profile strip hidden — context lives in conversation now */
+  .ci-profile-strip { display: none; }
+
+  /* ── CONTEXT CARD (top of ci-messages) ── */
+  .ci-context-card {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 12px; margin-bottom: 2px;
+    background: transparent; border: 1px solid var(--border);
+    border-radius: 20px; opacity: 0.55;
+    animation: fadeUp 0.3s ease both;
+    overflow: hidden;
   }
 
-  /* ── PROFILE STRIP ── */
-  .ci-profile-strip {
-    padding: 12px 16px; border-bottom: 1px solid var(--border);
-    background: var(--black); flex-shrink: 0;
+  .ci-context-identity {
+    font-size: 11px; color: var(--dim); font-style: italic;
+    line-height: 1.4; flex: 1;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   }
 
-  .ci-identity {
-    font-size: 13px; color: var(--white); font-style: italic;
-    line-height: 1.5; opacity: 0.8; margin-bottom: 5px;
+  .ci-context-meta {
+    font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 1px;
+    color: var(--accent-dim); text-transform: uppercase; white-space: nowrap;
+    flex-shrink: 0;
   }
 
-  .ci-root {
-    font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px;
-    color: var(--dimmer); text-transform: uppercase; line-height: 1.4;
-  }
-
-  .ci-root span {
-    color: var(--accent-dim); margin-right: 6px;
-  }
-
-  /* Checkin close card */
+  /* ── CLOSE CARD ── */
   .ci-close-card {
-    background: var(--accent-bg); border: 1px solid var(--accent-border);
-    border-radius: var(--radius); padding: 18px; margin-top: 4px;
+    background: var(--card);
+    border: 1px solid var(--border-mid);
+    border-top: 2px solid var(--accent);
+    border-radius: var(--radius); padding: 20px; margin-top: 8px;
     animation: fadeUp 0.4s ease both;
   }
-  .ci-close-card h3 {
+  .ci-close-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 18px;
+  }
+  .ci-close-label {
     font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 3px;
-    color: var(--accent); text-transform: uppercase; margin-bottom: 14px;
+    color: var(--accent); text-transform: uppercase;
+  }
+  .ci-close-date {
+    font-family: 'DM Mono', monospace; font-size: 9px; letter-spacing: 1px;
+    color: var(--dimmer); text-transform: uppercase;
+  }
+  .ci-close-row {
+    padding: 12px 0; border-bottom: 1px solid var(--border);
+  }
+  .ci-close-row:last-child { border-bottom: none; padding-bottom: 0; }
+  .ci-close-row-label {
+    font-family: 'DM Mono', monospace; font-size: 8px; letter-spacing: 2px;
+    color: var(--dimmer); text-transform: uppercase; margin-bottom: 5px;
+  }
+  .ci-close-row-val {
+    font-size: 14px; color: #cccccc; line-height: 1.55;
+  }
+  .ci-close-row.next .ci-close-row-label { color: var(--accent-dim); }
+  .ci-close-row.next .ci-close-row-val {
+    font-size: 15px; color: var(--accent); font-weight: 500; line-height: 1.5;
   }
 
 </style>
@@ -453,7 +535,7 @@
     <span class="version-tag">v17</span>
   </div>
   <div class="header-right">
-    <button class="icon-btn" id="export-btn" onclick="exportChat()">
+    <button class="icon-btn dev-only" id="export-btn" onclick="exportChat()">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
         <polyline points="7 10 12 15 17 10"/>
@@ -461,13 +543,13 @@
       </svg>
       Export
     </button>
-    <div class="sim-wrap">
+    <div class="sim-wrap dev-only">
       <select class="sim-select" id="sim-persona-select">
         <option value="random">Random</option>
       </select>
       <button class="icon-btn simulate" id="simulate-btn" onclick="runSimulation()">Simulate</button>
     </div>
-    <div class="sim-wrap">
+    <div class="sim-wrap dev-only">
       <select class="sim-select" id="bypass-select">
         <option value="0">Jamie, 24 — drifting</option>
         <option value="1">Rachel, 38 — career stuck</option>
@@ -717,7 +799,7 @@ function appendMessage(role, content, responseMs, isDeep) {
 
   const av = document.createElement('div');
   av.className = `avatar ${role === 'coach' ? 'coach-av' : 'user-av'}`;
-  av.textContent = role === 'coach' ? 'XX' : 'YOU';
+  if (role === 'coach') { av.innerHTML = `<svg viewBox="0 0 20 20" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="4" y1="4" x2="16" y2="16" stroke="#C8F135" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="4" x2="4" y2="16" stroke="#C8F135" stroke-width="2" stroke-linecap="round"/><circle cx="10" cy="10" r="2" fill="#C8F135"/></svg>`; } else { av.textContent = 'YOU'; }
 
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
@@ -749,7 +831,7 @@ function showTyping() {
   const msg = document.createElement('div');
   msg.className = 'msg coach'; msg.id = 'typing';
   const av = document.createElement('div');
-  av.className = 'avatar coach-av'; av.textContent = 'XX';
+  av.className = 'avatar coach-av'; av.innerHTML = `<svg viewBox="0 0 20 20" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="4" y1="4" x2="16" y2="16" stroke="#C8F135" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="4" x2="4" y2="16" stroke="#C8F135" stroke-width="2" stroke-linecap="round"/><circle cx="10" cy="10" r="2" fill="#C8F135"/></svg>`;
   const b = document.createElement('div');
   b.className = 'typing-bubble';
   b.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
@@ -922,6 +1004,8 @@ function processReply(text, responseMs, isDeep) {
     const ciTab = document.getElementById('tab-ci');
     ciTab.disabled = false;
     ciTab.classList.add('unlocked');
+    // Persist profile
+    try { localStorage.setItem('5x_profile', profileRaw); } catch(e) {}
     // Show action plan prompt after profile
     setTimeout(() => showLadderPrompt(), 600);
   }
@@ -932,6 +1016,8 @@ function processReply(text, responseMs, isDeep) {
     if (card) {
       document.getElementById('messages').appendChild(card);
       document.getElementById('phase-label').textContent = 'Path ready';
+      // Persist ladder
+      try { localStorage.setItem('5x_ladder', ladderRaw); } catch(e) {}
     }
   }
 
@@ -990,6 +1076,7 @@ async function getCoachResponse(userMessage = null, isRetry = false) {
     const { text: reply, isDeep } = stripDeepTag(data.content[0].text);
     processReply(reply, responseMs, isDeep);
     history.push({ role: 'assistant', content: reply });
+    try { localStorage.setItem('5x_history', JSON.stringify(history)); } catch(e) {}
 
   } catch (err) {
     removeTyping();
@@ -1123,6 +1210,9 @@ async function requestLadder() {
 }
 
 function resetConversation() {
+  // Clear persistence
+  try { localStorage.removeItem('5x_profile'); localStorage.removeItem('5x_ladder'); localStorage.removeItem('5x_history'); localStorage.removeItem('5x_streak'); localStorage.removeItem('5x_streak_date'); } catch(e) {}
+
   // Onboarding state
   history = []; started = false; exchangeCount = 0; lastUserMessage = null; lastDeepExchange = -10; deepCount = 0;
   isSimulating = false;
@@ -1161,6 +1251,60 @@ function resetConversation() {
 }
 
 document.getElementById('input').addEventListener('focus', () => { setTimeout(scrollBottom, 350); });
+
+// ── LOCALSTORAGE RESTORE ──
+(function restoreSession() {
+  try {
+    const profileRaw = localStorage.getItem('5x_profile');
+    const ladderRaw  = localStorage.getItem('5x_ladder');
+    const historyRaw = localStorage.getItem('5x_history');
+
+    if (!profileRaw) return; // nothing saved — show intro normally
+
+    // We have a saved session — skip intro
+    document.getElementById('intro-screen').style.display = 'none';
+    document.getElementById('input').disabled = false;
+    document.getElementById('send-btn').disabled = false;
+    const hint = document.getElementById('hint');
+    if (hint) hint.textContent = 'Enter to send · Shift+Enter for new line';
+    document.getElementById('empty-state')?.remove();
+
+    // Restore history
+    if (historyRaw) {
+      try { history = JSON.parse(historyRaw); } catch(e) { history = []; }
+    }
+    started = true;
+
+    // Re-render profile card silently
+    const profileCard = buildProfileCard(profileRaw);
+    profileCard.id = 'profile-card';
+    document.getElementById('messages').appendChild(profileCard);
+
+    // Re-render ladder card if saved
+    if (ladderRaw) {
+      const ladderCard = buildLadderCard(ladderRaw);
+      if (ladderCard) {
+        document.getElementById('messages').appendChild(ladderCard);
+        document.getElementById('phase-label').textContent = 'Path ready';
+      }
+    } else {
+      document.getElementById('phase-label').textContent = 'Profile built';
+    }
+
+    // Unlock check-in tab
+    const ciTab = document.getElementById('tab-ci');
+    ciTab.disabled = false;
+    ciTab.classList.add('unlocked');
+
+    // Show a subtle restored indicator then scroll
+    appendMessage('coach', 'Welcome back. Ready for today’s check-in whenever you are.', null, false);
+    scrollBottom();
+
+  } catch(e) {
+    // If anything goes wrong just show the intro normally
+    console.warn('5x restore failed:', e);
+  }
+})();
 
 // ── TAB SWITCHING ──
 function switchTab(tab) {
@@ -1310,10 +1454,24 @@ function initCheckin() {
     stepEl.style.display = 'none';
   }
 
-  // Streak (hardcoded to 1 until localStorage lands)
+  // Streak — read from localStorage, increment on each new check-in init
   const streakEl = document.getElementById('ci-streak');
+  let streakDays = 1;
+  try {
+    const saved = parseInt(localStorage.getItem('5x_streak') || '0');
+    const lastDate = localStorage.getItem('5x_streak_date');
+    const today = new Date().toDateString();
+    if (lastDate === today) {
+      streakDays = saved || 1; // same day, don't increment
+    } else {
+      streakDays = (saved || 0) + 1;
+      localStorage.setItem('5x_streak', streakDays);
+      localStorage.setItem('5x_streak_date', today);
+    }
+  } catch(e) { streakDays = 1; }
   const dot = document.createElement('div'); dot.className = 'ci-streak-dot';
-  const label = document.createElement('span'); label.textContent = '1 DAY';
+  const label = document.createElement('span');
+  label.textContent = streakDays + (streakDays === 1 ? ' DAY' : ' DAYS');
   streakEl.appendChild(dot); streakEl.appendChild(label);
 
   // ── PROFILE STRIP ──
@@ -1351,6 +1509,24 @@ function initCheckin() {
   // Update header pill
   document.getElementById('phase-label').textContent = 'Check-in';
 
+  // Inject ambient context card at top of messages
+  if (identity || rootCause) {
+    const ctx = document.createElement('div');
+    ctx.className = 'ci-context-card';
+    const meta = document.createElement('div');
+    meta.className = 'ci-context-meta';
+    meta.textContent = 'Your profile';
+    const txt = document.createElement('div');
+    txt.className = 'ci-context-identity';
+    const parts = [];
+    if (identity) parts.push('\u201C' + identity + '\u201D');
+    if (rootCause) parts.push('Blocker: ' + rootCause.toLowerCase());
+    txt.textContent = parts.join('  ·  ');
+    ctx.appendChild(meta);
+    ctx.appendChild(txt);
+    document.getElementById('ci-messages').appendChild(ctx);
+  }
+
   // Kick off coach opening
   getCiResponse();
 }
@@ -1364,7 +1540,7 @@ function ciAppendMessage(role, content, isDeep) {
 
   const av = document.createElement('div');
   av.className = `avatar ${role === 'coach' ? 'coach-av' : 'user-av'}`;
-  av.textContent = role === 'coach' ? 'XX' : 'YOU';
+  if (role === 'coach') { av.innerHTML = `<svg viewBox="0 0 20 20" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="4" y1="4" x2="16" y2="16" stroke="#C8F135" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="4" x2="4" y2="16" stroke="#C8F135" stroke-width="2" stroke-linecap="round"/><circle cx="10" cy="10" r="2" fill="#C8F135"/></svg>`; } else { av.textContent = 'YOU'; }
 
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
@@ -1390,7 +1566,7 @@ function ciShowTyping() {
   const msg = document.createElement('div');
   msg.className = 'msg coach'; msg.id = 'ci-typing';
   const av = document.createElement('div');
-  av.className = 'avatar coach-av'; av.textContent = 'XX';
+  av.className = 'avatar coach-av'; av.innerHTML = `<svg viewBox="0 0 20 20" width="14" height="14" fill="none" xmlns="http://www.w3.org/2000/svg"><line x1="4" y1="4" x2="16" y2="16" stroke="#C8F135" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="4" x2="4" y2="16" stroke="#C8F135" stroke-width="2" stroke-linecap="round"/><circle cx="10" cy="10" r="2" fill="#C8F135"/></svg>`;
   const b = document.createElement('div');
   b.className = 'typing-bubble';
   b.innerHTML = '<div class="dot"></div><div class="dot"></div><div class="dot"></div>';
@@ -1414,15 +1590,32 @@ function buildCheckinCloseCard(raw) {
 
   const card = document.createElement('div');
   card.className = 'ci-close-card';
-  const title = document.createElement('h3');
-  title.textContent = 'Check-in complete';
-  card.appendChild(title);
 
-  [['Win today', win], ['Working through', challenge], ['Next commitment', next]].forEach(([label, val]) => {
+  // Header row — label + date
+  const header = document.createElement('div');
+  header.className = 'ci-close-header';
+  const lbl = document.createElement('div');
+  lbl.className = 'ci-close-label';
+  lbl.textContent = 'Check-in complete';
+  const dateStr = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }).toUpperCase();
+  const dateLbl = document.createElement('div');
+  dateLbl.className = 'ci-close-date';
+  dateLbl.textContent = dateStr;
+  header.appendChild(lbl); header.appendChild(dateLbl);
+  card.appendChild(header);
+
+  // Rows — win, challenge, next (next gets accent treatment)
+  [['Win', win, ''], ['Working through', challenge, ''], ['Tomorrow', next, 'next']].forEach(([label, val, mod]) => {
     if (!val) return;
     const row = document.createElement('div');
-    row.className = 'profile-row';
-    row.innerHTML = `<span class="profile-key">${label}</span><span class="profile-val"${label === 'Next commitment' ? ' style="color:var(--accent);"' : ''}>${val}</span>`;
+    row.className = 'ci-close-row' + (mod ? ' ' + mod : '');
+    const rowLbl = document.createElement('div');
+    rowLbl.className = 'ci-close-row-label';
+    rowLbl.textContent = label;
+    const v = document.createElement('div');
+    v.className = 'ci-close-row-val';
+    v.textContent = val;
+    row.appendChild(rowLbl); row.appendChild(v);
     card.appendChild(row);
   });
 
